@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  name               String
+  email              String    @unique
+  password           String
+  role               String    @default("admin")
+  isActive           Boolean   @default(true)
+  lastLoginAt        DateTime?
+  refreshTokenHashes String[]  @default([])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  createdChallans Challan[]  @relation("ChallanCreatedBy")
+  updatedChallans Challan[]  @relation("ChallanUpdatedBy")
+  deletedChallans Challan[]  @relation("ChallanDeletedBy")
+  auditLogs       AuditLog[] @relation("AuditPerformedBy")
+
+  @@map("users")
+}
+
+model Challan {
+  id              String    @id @default(uuid())
+  challanNumber   String    @unique
+  challanSequence Int
+  truckNumber     String
+  placeOfDelivery String
+  driverName      String?
+  challanDate     DateTime
+  challanTime     String
+  isDeleted       Boolean   @default(false)
+  deletedAt       DateTime?
+  deletedReason   String?
+
+  deletedBy     String?
+  deletedByUser User?   @relation("ChallanDeletedBy", fields: [deletedBy], references: [id])
+
+  createdBy     String
+  createdByUser User   @relation("ChallanCreatedBy", fields: [createdBy], references: [id])
+
+  updatedBy     String?
+  updatedByUser User?   @relation("ChallanUpdatedBy", fields: [updatedBy], references: [id])
+
+  printCount    Int       @default(0)
+  lastPrintedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([truckNumber])
+  @@index([placeOfDelivery])
+  @@index([challanDate])
+  @@index([isDeleted])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@map("challans")
+}
+
+/// Single-row counter used with an atomic upsert+increment to generate
+/// strictly increasing challan sequence numbers. Deleted challans never
+/// decrement it, so a number is never reused.
+model ChallanCounter {
+  id       String @id @default(uuid())
+  key      String @unique @default("challan_sequence")
+  sequence Int    @default(0)
+
+  @@map("challan_counters")
+}
+
+model Settings {
+  id                 String   @id @default(uuid())
+  key                String   @unique @default("app_settings")
+  companyName        String   @default("Ash Transportation")
+  companyAddress     String   @default("")
+  companyPhone       String   @default("")
+  copiesPerPrint     Int      @default(4)
+  printerType        String   @default("ESCPOS")
+  printerName        String   @default("")
+  printerWidthMm     Int      @default(80)
+  printerCalibration Json     @default("{}")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id     String  @id @default(uuid())
+  action String
+  entityType String
+  entityId   String?
+
+  performedBy     String
+  performedByUser User   @relation("AuditPerformedBy", fields: [performedBy], references: [id])
+
+  before    Json?
+  after     Json?
+  reason    String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([entityType])
+  @@index([performedBy])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

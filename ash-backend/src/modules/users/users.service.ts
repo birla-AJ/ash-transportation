@@ -4,94 +4,102 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
-import { Model, Types } from 'mongoose';
+import { PrismaService } from '../../database/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserDocument } from './schemas/user.schema';
 
 const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateUserDto): Promise<UserDocument> {
-    const existing = await this.userModel.findOne({ email: dto.email.toLowerCase() });
+  async create(dto: CreateUserDto) {
+    const email = dto.email.toLowerCase();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
       throw new ConflictException('A user with this email already exists');
     }
     const hashed = await bcrypt.hash(dto.password, SALT_ROUNDS);
-    const created = new this.userModel({
-      ...dto,
-      email: dto.email.toLowerCase(),
-      password: hashed,
+    const user = await this.prisma.user.create({
+      data: { ...dto, email, password: hashed },
     });
-    return created.save();
+    return this.stripPassword(user);
   }
 
-  async findAll(): Promise<UserDocument[]> {
-    return this.userModel.find().sort({ createdAt: -1 }).exec();
+  async findAll() {
+    const users = await this.prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
+    return users.map((u) => this.stripPassword(u));
   }
 
-  async findById(id: string): Promise<UserDocument | null> {
-    if (!Types.ObjectId.isValid(id)) return null;
-    return this.userModel.findById(id).exec();
+  async findById(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    return user ? this.stripPassword(user) : null;
   }
 
-  async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findOne({ email: email.toLowerCase() })
-      .select('+password +refreshTokenHashes')
-      .exec();
+  async findByEmailWithPassword(email: string) {
+    return this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   }
 
-  async update(id: string, dto: UpdateUserDto): Promise<UserDocument> {
-    const user = await this.userModel.findByIdAndUpdate(id, dto, { new: true }).exec();
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+  async update(id: string, dto: UpdateUserDto) {
+    try {
+      const user = await this.prisma.user.update({ where: { id }, data: dto });
+      return this.stripPassword(user);
+    } catch {
+      throw new NotFoundException('User not found');
+    }
   }
 
   async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
-    const user = await this.userModel.findById(id).select('+password').exec();
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
     const valid = await bcrypt.compare(dto.currentPassword, user.password);
     if (!valid) throw new UnauthorizedException('Current password is incorrect');
 
-    user.password = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
-    user.refreshTokenHashes = [];
-    await user.save();
+    const hashed = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id },
+      data: { password: hashed, refreshTokenHashes: [] },
+    });
   }
 
   async setLastLogin(id: string): Promise<void> {
-    await this.userModel.updateOne({ _id: id }, { lastLoginAt: new Date() }).exec();
+    await this.prisma.user.update({ where: { id }, data: { lastLoginAt: new Date() } });
   }
 
   async addRefreshTokenHash(id: string, tokenHash: string): Promise<void> {
-    await this.userModel
-      .updateOne({ _id: id }, { $push: { refreshTokenHashes: { $each: [tokenHash], $slice: -10 } } })
-      .exec();
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) return;
+    const updated = [...user.refreshTokenHashes, tokenHash].slice(-10);
+    await this.prisma.user.update({ where: { id }, data: { refreshTokenHashes: updated } });
   }
 
   async removeRefreshTokenHash(id: string, tokenHash: string): Promise<void> {
-    await this.userModel
-      .updateOne({ _id: id }, { $pull: { refreshTokenHashes: tokenHash } })
-      .exec();
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) return;
+    const updated = user.refreshTokenHashes.filter((h) => h !== tokenHash);
+    await this.prisma.user.update({ where: { id }, data: { refreshTokenHashes: updated } });
   }
 
   async clearAllRefreshTokens(id: string): Promise<void> {
-    await this.userModel.updateOne({ _id: id }, { refreshTokenHashes: [] }).exec();
+    await this.prisma.user.update({ where: { id }, data: { refreshTokenHashes: [] } });
   }
 
   async hasRefreshTokenHash(id: string, tokenHash: string): Promise<boolean> {
-    const user = await this.userModel.findById(id).select('+refreshTokenHashes').exec();
+    const user = await this.prisma.user.findUnique({ where: { id } });
     return !!user?.refreshTokenHashes?.includes(tokenHash);
   }
 
   async countUsers(): Promise<number> {
-    return this.userModel.countDocuments().exec();
+    return this.prisma.user.count();
+  }
+
+  /** Never return the password hash to callers/controllers. */
+  private stripPassword<T extends { password?: string }>(user: T): Omit<T, 'password'> {
+    const { password, ...rest } = user;
+    return rest;
   }
 }

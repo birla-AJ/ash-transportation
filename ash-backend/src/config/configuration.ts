@@ -6,8 +6,9 @@ export default () => ({
     .split(',')
     .map((origin) => origin.trim()),
 
-  mongodbUri:
-    process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ash_transportation',
+  databaseUrl:
+    process.env.DATABASE_URL ||
+    'postgresql://postgres:postgres@127.0.0.1:5432/ash_transportation?schema=public',
 
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || 'dev_access_secret',

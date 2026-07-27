@@ -1,29 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../database/prisma.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
-import { Settings, SettingsDocument } from './schemas/settings.schema';
 
 const SETTINGS_KEY = 'app_settings';
 
 @Injectable()
 export class SettingsService {
-  constructor(
-    @InjectModel(Settings.name) private settingsModel: Model<SettingsDocument>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async get(): Promise<SettingsDocument> {
-    let settings = await this.settingsModel.findOne({ key: SETTINGS_KEY }).exec();
-    if (!settings) {
-      settings = await this.settingsModel.create({ key: SETTINGS_KEY });
-    }
-    return settings;
+  async get() {
+    return this.prisma.settings.upsert({
+      where: { key: SETTINGS_KEY },
+      update: {},
+      create: { key: SETTINGS_KEY },
+    });
   }
 
-  async update(dto: UpdateSettingsDto): Promise<SettingsDocument> {
-    const settings = await this.settingsModel
-      .findOneAndUpdate({ key: SETTINGS_KEY }, dto, { new: true, upsert: true })
-      .exec();
-    return settings!;
+  async update(dto: UpdateSettingsDto) {
+    return this.prisma.settings.upsert({
+      where: { key: SETTINGS_KEY },
+      update: dto as Prisma.SettingsUpdateInput,
+      create: { key: SETTINGS_KEY, ...dto } as Prisma.SettingsCreateInput,
+    });
   }
 }

@@ -1,14 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../database/prisma.service';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
-import { AuditAction, AuditLog, AuditLogDocument } from './schemas/audit-log.schema';
+
+export type AuditAction =
+  | 'CHALLAN_CREATE'
+  | 'CHALLAN_UPDATE'
+  | 'CHALLAN_DELETE'
+  | 'CHALLAN_REPRINT'
+  | 'USER_LOGIN'
+  | 'USER_LOGOUT'
+  | 'USER_CREATE'
+  | 'USER_UPDATE';
 
 export interface CreateAuditLogInput {
   action: AuditAction;
   entityType: string;
-  entityId?: string | Types.ObjectId | null;
-  performedBy: string | Types.ObjectId;
+  entityId?: string | null;
+  performedBy: string;
   before?: Record<string, unknown> | null;
   after?: Record<string, unknown> | null;
   reason?: string | null;
@@ -17,46 +26,49 @@ export interface CreateAuditLogInput {
 
 @Injectable()
 export class AuditLogsService {
-  constructor(
-    @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async log(input: CreateAuditLogInput): Promise<void> {
-    await this.auditLogModel.create({
-      action: input.action,
-      entityType: input.entityType,
-      entityId: input.entityId ?? null,
-      performedBy: input.performedBy,
-      before: input.before ?? null,
-      after: input.after ?? null,
-      reason: input.reason ?? null,
-      ipAddress: input.ipAddress ?? null,
+    await this.prisma.auditLog.create({
+      data: {
+        action: input.action,
+        entityType: input.entityType,
+        entityId: input.entityId ?? null,
+        performedBy: input.performedBy,
+        before: input.before === undefined ? undefined : (input.before as Prisma.InputJsonValue),
+        after: input.after === undefined ? undefined : (input.after as Prisma.InputJsonValue),
+        reason: input.reason ?? null,
+        ipAddress: input.ipAddress ?? null,
+      },
     });
   }
 
   async findAll(query: PaginationQueryDto & { entityType?: string; action?: string }) {
     const { page, limit, sortBy, sortOrder, search, entityType, action } = query;
-    const filter: Record<string, unknown> = {};
-    if (entityType) filter.entityType = entityType;
-    if (action) filter.action = action;
+
+    const where: Prisma.AuditLogWhereInput = {};
+    if (entityType) where.entityType = entityType;
+    if (action) where.action = action;
     if (search) {
-      filter.$or = [
-        { reason: { $regex: search, $options: 'i' } },
-        { entityType: { $regex: search, $options: 'i' } },
+      where.OR = [
+        { reason: { contains: search, mode: 'insensitive' } },
+        { entityType: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    const sort: Record<string, 1 | -1> = { [sortBy || 'createdAt']: sortOrder === 'asc' ? 1 : -1 };
+    const orderBy: Prisma.AuditLogOrderByWithRelationInput = {
+      [sortBy || 'createdAt']: sortOrder === 'asc' ? 'asc' : 'desc',
+    };
 
     const [items, total] = await Promise.all([
-      this.auditLogModel
-        .find(filter)
-        .populate('performedBy', 'name email')
-        .sort(sort)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .exec(),
-      this.auditLogModel.countDocuments(filter).exec(),
+      this.prisma.auditLog.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { performedByUser: { select: { name: true, email: true } } },
+      }),
+      this.prisma.auditLog.count({ where }),
     ]);
 
     return {

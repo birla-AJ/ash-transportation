@@ -30,25 +30,25 @@ export class AuthService {
     if (!user.isActive) throw new UnauthorizedException('Account is disabled');
 
     const tokens = await this.issueTokens(
-      user._id.toString(),
+      user.id,
       user.email,
       user.role,
       dto.rememberMe,
     );
 
-    await this.usersService.setLastLogin(user._id.toString());
+    await this.usersService.setLastLogin(user.id);
     await this.auditLogsService.log({
       action: 'USER_LOGIN',
       entityType: 'User',
-      entityId: user._id,
-      performedBy: user._id,
+      entityId: user.id,
+      performedBy: user.id,
       ipAddress,
     });
 
     return {
       ...tokens,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -66,7 +66,7 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
     if (!user || !user.isActive) throw new UnauthorizedException('User no longer active');
 
-    return this.issueTokens(user._id.toString(), user.email, user.role, false);
+    return this.issueTokens(user.id, user.email, user.role, false);
   }
 
   async logout(userId: string, refreshToken?: string) {

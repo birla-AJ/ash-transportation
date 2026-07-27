@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { Challan } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import { ChallansService } from '../challans/challans.service';
 import { QueryChallanDto } from '../challans/dto/query-challan.dto';
-import { ChallanDocument } from '../challans/schemas/challan.schema';
 
 const COLUMNS = [
   { header: 'Challan Number', key: 'challanNumber', width: 20 },
@@ -19,7 +19,7 @@ const COLUMNS = [
 export class ExportService {
   constructor(private readonly challansService: ChallansService) {}
 
-  private async getRows(query: Omit<QueryChallanDto, 'page' | 'limit'>): Promise<ChallanDocument[]> {
+  private async getRows(query: Omit<QueryChallanDto, 'page' | 'limit'>): Promise<Challan[]> {
     return this.challansService.findAllRaw(query);
   }
 
@@ -32,7 +32,7 @@ export class ExportService {
     };
   }
 
-  private toRow(r: ChallanDocument) {
+  private toRow(r: Challan) {
     return {
       challanNumber: r.challanNumber,
       truckNumber: r.truckNumber,

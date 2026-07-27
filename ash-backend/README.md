@@ -1,13 +1,13 @@
 # Ash Transportation Management System — Backend
 
-NestJS + MongoDB REST API powering the Ash Transportation admin website and
-mobile app: authentication, challan creation/printing, reports, exports,
-settings, and audit logging.
+NestJS + PostgreSQL (Prisma) REST API powering the Ash Transportation admin
+website and mobile app: authentication, challan creation/printing, reports,
+exports, settings, and audit logging.
 
 ## Requirements
 
 - Node.js 18+ (20 LTS recommended)
-- MongoDB 6+ (local install, Docker, or MongoDB Atlas)
+- PostgreSQL 14+ (local install, Docker, or managed like RDS/Supabase)
 
 ## Setup
 
@@ -15,15 +15,29 @@ settings, and audit logging.
 cd ash-backend
 npm install
 cp .env.example .env
-# edit .env: set MONGODB_URI, JWT secrets, and admin bootstrap credentials
+# edit .env: set DATABASE_URL, JWT secrets, and admin bootstrap credentials
 ```
 
-## Run MongoDB locally (if you don't already have it)
+## Run PostgreSQL locally (if you don't already have it)
 
 ```bash
 # Docker option
-docker run -d --name ash-mongo -p 27017:27017 -v ash_mongo_data:/data/db mongo:6
+docker run -d --name ash-postgres -p 5432:5432 \
+  -e POSTGRES_USER=ash_user -e POSTGRES_PASSWORD=change_this_password \
+  -e POSTGRES_DB=ash_transportation \
+  -v ash_pg_data:/var/lib/postgresql/data \
+  postgres:16
 ```
+
+## Apply the database schema
+
+```bash
+npx prisma generate        # generate the Prisma client
+npx prisma migrate dev --name init   # creates tables from prisma/schema.prisma
+```
+
+In production use `npm run prisma:migrate:deploy` instead of `migrate dev`
+(no interactive prompts, safe for CI/CD).
 
 ## Seed the first admin user
 
@@ -71,20 +85,45 @@ The website and mobile app both use this exact same flow.
 
 ## Challan numbering guarantee
 
-Challan numbers are generated from a single atomic MongoDB counter
-document (`challan_counters` collection) using `findOneAndUpdate` with
-`$inc`. The counter only ever increases — deleting a challan does **not**
-decrement it — so a challan number can never be issued twice, matching
-the requirement in the spec.
+Challan numbers are generated from a single atomic Postgres counter row
+(`challan_counters` table) using an `upsert` with `sequence: { increment: 1 }`,
+which Prisma compiles to an atomic `INSERT ... ON CONFLICT DO UPDATE`. The
+counter only ever increases — deleting a challan does **not** decrement
+it — so a challan number can never be issued twice, matching the
+requirement in the spec.
+
+## Migrated from MongoDB — what changed
+
+This backend originally used MongoDB/Mongoose and was migrated to
+PostgreSQL/Prisma. If you're integrating an existing frontend built against
+the old API, note:
+
+- All ids are now UUID strings under the `id` field (was `_id` under Mongo).
+- Populated relations (e.g. a challan's creator) now come back as
+  `createdByUser: { id, name, email }` instead of replacing `createdBy`
+  in place — the raw foreign key still exists separately as `createdBy`
+  (a plain user id string).
+- Full-text search on challans now uses SQL `ILIKE` (`contains`,
+  case-insensitive) instead of a MongoDB text index — same behavior from
+  the API consumer's point of view.
 
 ## Environment variables
 
-See `.env.example` for the full list (Mongo URI, JWT secrets/expiry,
-admin bootstrap credentials, challan number prefix/padding, CORS origins).
+See `.env.example` for the full list (Postgres connection string, JWT
+secrets/expiry, admin bootstrap credentials, challan number prefix/padding,
+CORS origins).
+
+## Prisma cheatsheet
+
+```bash
+npx prisma studio              # visual DB browser
+npx prisma migrate dev --name <change>   # create + apply a new migration (dev)
+npm run prisma:migrate:deploy  # apply pending migrations (production/CI)
+npx prisma generate            # regenerate the client after schema changes
+```
 
 ## Next steps
 
 - `ash-website/` — React admin website (AG Grid reports, receipt printing)
 - `ash-mobile/` — React Native Android app
-- Deployment guide (Nginx + PM2 + AWS EC2) and printing guide will be
-  provided alongside those.
+- Deployment guide (Nginx + PM2 + AWS EC2) provided separately.

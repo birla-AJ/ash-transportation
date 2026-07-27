@@ -18,7 +18,7 @@ export class UsersController {
   async me(@CurrentUser('userId') userId: string) {
     const user = await this.usersService.findById(userId);
     return {
-      id: user!._id,
+      id: user!.id,
       name: user!.name,
       email: user!.email,
       role: user!.role,
