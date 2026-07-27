@@ -35,9 +35,8 @@ export class ChallansService {
   }
 
   private formatChallanNumber(sequence: number): string {
-    const prefix = this.config.get<string>('challan.prefix') || 'ASH';
-    const padLength = this.config.get<number>('challan.padLength') || 6;
-    return `${prefix}-${String(sequence).padStart(padLength, '0')}`;
+    const padLength = this.config.get<number>('challan.padLength') || 2;
+    return String(sequence).padStart(padLength, '0');
   }
 
   private buildWhere(

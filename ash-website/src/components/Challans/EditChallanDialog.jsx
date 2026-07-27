@@ -37,7 +37,7 @@ export default function EditChallanDialog({ challan, onClose, onSave }) {
     }
     setLoading(true);
     try {
-      await onSave(challan._id, form);
+      await onSave(challan.id, form);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update challan');
     } finally {

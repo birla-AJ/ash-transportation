@@ -22,7 +22,7 @@ export default function DeleteChallanDialog({ challan, onClose, onConfirm }) {
     }
     setLoading(true);
     try {
-      await onConfirm(challan._id, reason.trim());
+      await onConfirm(challan.id, reason.trim());
     } finally {
       setLoading(false);
     }

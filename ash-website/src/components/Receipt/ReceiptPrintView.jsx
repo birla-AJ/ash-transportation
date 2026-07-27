@@ -9,19 +9,19 @@ export default function ReceiptPrintView({ challan, copies = 4, autoPrint = true
   const hasPrintedRef = useRef(false);
 
   useEffect(() => {
-    if (autoPrint && challan?._id && !hasPrintedRef.current) {
+    if (autoPrint && challan?.id && !hasPrintedRef.current) {
       hasPrintedRef.current = true;
       // slight delay lets the receipt fully render before print dialog opens
       const timer = setTimeout(() => handlePrint(), 300);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [challan?._id]);
+  }, [challan?.id]);
 
   async function handlePrint() {
     try {
-      if (challan?._id) {
-        await registerPrint(challan._id);
+      if (challan?.id) {
+        await registerPrint(challan.id);
       }
     } catch (err) {
       // Printing should still proceed even if the audit call fails

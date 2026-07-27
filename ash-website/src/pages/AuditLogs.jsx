@@ -57,12 +57,12 @@ export default function AuditLogs() {
             </TableHead>
             <TableBody>
               {rows.map((log) => (
-                <TableRow key={log._id} hover>
+                <TableRow key={log.id} hover>
                   <TableCell>
                     <Chip size="small" label={log.action} color={ACTION_COLORS[log.action] || 'default'} />
                   </TableCell>
                   <TableCell>{log.entityType}</TableCell>
-                  <TableCell>{log.performedBy?.name || '—'}</TableCell>
+                  <TableCell>{log.performedByUser?.name || '—'}</TableCell>
                   <TableCell>{log.reason || '—'}</TableCell>
                   <TableCell>{new Date(log.createdAt).toLocaleString('en-IN')}</TableCell>
                 </TableRow>

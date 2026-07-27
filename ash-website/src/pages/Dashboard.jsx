@@ -114,7 +114,7 @@ export default function Dashboard() {
                 </TableHead>
                 <TableBody>
                   {stats?.recentChallans?.map((c) => (
-                    <TableRow key={c._id} hover>
+                    <TableRow key={c.id} hover>
                       <TableCell>{c.challanNumber}</TableCell>
                       <TableCell>{c.truckNumber}</TableCell>
                       <TableCell>{c.placeOfDelivery}</TableCell>
@@ -141,7 +141,7 @@ export default function Dashboard() {
             </Typography>
             {stats?.latestActivity?.map((c) => (
               <Box
-                key={c._id}
+                key={c.id}
                 sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
