@@ -35,8 +35,7 @@ export class ChallansService {
   }
 
   private formatChallanNumber(sequence: number): string {
-    const padLength = this.config.get<number>('challan.padLength') || 2;
-    return String(sequence).padStart(padLength, '0');
+    return sequence.toString();
   }
 
   private buildWhere(
