@@ -13,6 +13,7 @@
  * native <input type="time"> in the Edit Challan dialog requires; the
  * 12-hour AM/PM display happens only at render time on the receipt (see
  * `formatTime12h` on the frontend).
+ * 
  */
 export function formatIstTime24h(date: Date): string {
   return new Intl.DateTimeFormat('en-GB', {
