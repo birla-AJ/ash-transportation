@@ -117,6 +117,20 @@
   text-align: center;
   font-size: 9.5pt;
   padding-top: 10mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.receipt-signature-img {
+  height: 14mm;
+  width: auto;
+  max-width: 32mm;
+  object-fit: contain;
+  margin-bottom: 1mm;
+  /* keeps the ink visible when the receipt is printed in grayscale */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 /* Screen preview: show pages stacked with a gap and shadow so multiple

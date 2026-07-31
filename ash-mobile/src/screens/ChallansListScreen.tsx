@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, CompositeNavigationProp, NavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing } from '../theme/theme';
@@ -76,7 +77,7 @@ export default function ChallansListScreen({ navigation }: { navigation: Nav }) 
   }
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <View style={styles.header}>
         <ScreenTitle>Challans</ScreenTitle>
         <Field
@@ -94,10 +95,10 @@ export default function ChallansListScreen({ navigation }: { navigation: Nav }) 
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <ChallanCard challan={item} onPress={() => navigation.navigate('ChallanDetail', { challanId: item._id })} />
+          <ChallanCard challan={item} onPress={() => navigation.navigate('ChallanDetail', { challanId: item.id })} />
         )}
         onEndReachedThreshold={0.4}
         onEndReached={loadMore}
@@ -106,7 +107,7 @@ export default function ChallansListScreen({ navigation }: { navigation: Nav }) 
         ListEmptyComponent={<EmptyState text={refreshing ? 'Loading…' : 'No challans found'} />}
         ListFooterComponent={loading ? <ActivityIndicator style={{ marginVertical: spacing(2) }} color={colors.primary} /> : null}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

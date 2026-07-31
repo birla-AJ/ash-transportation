@@ -35,7 +35,9 @@ export class ChallansService {
   }
 
   private formatChallanNumber(sequence: number): string {
-    return sequence.toString();
+    const prefix = this.config.get<string>('challan.prefix') || 'ASH';
+    const padLength = this.config.get<number>('challan.padLength') || 6;
+    return `${prefix}-${String(sequence).padStart(padLength, '0')}`;
   }
 
   private buildWhere(
@@ -80,6 +82,7 @@ export class ChallansService {
         challanTime: now.toTimeString().slice(0, 5),
         createdBy: userId,
       },
+      include: { createdByUser: USER_SELECT },
     });
 
     await this.auditLogsService.log({
@@ -199,6 +202,7 @@ export class ChallansService {
     const challan = await this.prisma.challan.update({
       where: { id },
       data: { printCount: existing.printCount + 1, lastPrintedAt: new Date() },
+      include: { createdByUser: USER_SELECT },
     });
 
     await this.auditLogsService.log({

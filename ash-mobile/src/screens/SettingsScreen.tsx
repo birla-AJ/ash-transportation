@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompositeNavigationProp, NavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing, typography } from '../theme/theme';
@@ -53,7 +54,8 @@ export default function SettingsScreen({ navigation }: { navigation: Nav }) {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <ScreenTitle>Settings</ScreenTitle>
 
       <Card style={{ marginBottom: spacing(2) }}>
@@ -103,11 +105,13 @@ export default function SettingsScreen({ navigation }: { navigation: Nav }) {
           <PrimaryButton title={saving ? 'Saving…' : 'Save Settings'} onPress={handleSave} loading={saving} />
         </Card>
       ) : null}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing(2), paddingBottom: spacing(5) },
 });

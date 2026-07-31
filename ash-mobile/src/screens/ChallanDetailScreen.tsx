@@ -131,7 +131,7 @@ export default function ChallanDetailScreen({ navigation, route }: { navigation:
               <View style={{ gap: spacing(1.25), marginTop: spacing(2) }}>
                 <PrimaryButton
                   title="Reprint Receipt"
-                  onPress={() => navigation.navigate('Receipt', { challanId: challan._id })}
+                  onPress={() => navigation.navigate('Receipt', { challanId: challan.id })}
                 />
                 <OutlineButton title="Edit" onPress={() => setEditing(true)} />
                 <TextButton title="Delete Challan" color={colors.error} onPress={() => setDeleteOpen(true)} />

@@ -11,20 +11,37 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
   Button,
   Skeleton,
+  Stack,
 } from '@mui/material';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import TodayIcon from '@mui/icons-material/Today';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import EventIcon from '@mui/icons-material/Event';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { getDashboardStats } from '../api/challansApi';
+import TodayListModal from '../components/Dashboard/TodayListModal';
 
-function StatCard({ label, value, icon, color }) {
+function StatCard({ label, value, icon, color, onClick }) {
+  const clickable = !!onClick;
   return (
-    <Paper sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2, height: '100%' }}>
+    <Paper
+      onClick={onClick}
+      sx={{
+        p: 2.5,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        height: '100%',
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        '&:hover': clickable
+          ? { transform: 'translateY(-2px)', boxShadow: 4 }
+          : undefined,
+      }}
+    >
       <Box
         sx={{
           bgcolor: `${color}.main`,
@@ -32,33 +49,44 @@ function StatCard({ label, value, icon, color }) {
           borderRadius: 2,
           p: 1.4,
           display: 'flex',
+          flexShrink: 0,
         }}
       >
         {icon}
       </Box>
-      <Box>
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Typography variant="h4" fontWeight={700}>
           {value ?? <Skeleton width={40} />}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" noWrap>
           {label}
         </Typography>
       </Box>
+      {clickable && <ChevronRightIcon sx={{ color: 'text.secondary', flexShrink: 0 }} />}
     </Paper>
   );
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+  const [modal, setModal] = useState({ open: false, title: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
     getDashboardStats().then(setStats).catch(() => setStats({}));
   }, []);
 
+  const activity = stats?.latestActivity?.length ? stats.latestActivity : stats?.recentChallans || [];
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+        sx={{ mb: 3 }}
+      >
         <Typography variant="h5" fontWeight={700}>
           Dashboard
         </Typography>
@@ -66,112 +94,107 @@ export default function Dashboard() {
           variant="contained"
           startIcon={<AddCircleIcon />}
           onClick={() => navigate('/add-challan')}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           Add Challan
         </Button>
-      </Box>
+      </Stack>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard label="Today's Trips" value={stats?.todayTrips} icon={<TodayIcon />} color="primary" />
+        <Grid item xs={6} md={3}>
+          <StatCard
+            label="Today's Trips"
+            value={stats?.todayTrips}
+            icon={<TodayIcon />}
+            color="primary"
+            onClick={() => setModal({ open: true, title: "Today's Trips" })}
+          />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} md={3}>
           <StatCard
             label="Today's Challans"
             value={stats?.todayChallans}
             icon={<LocalShippingIcon />}
             color="secondary"
+            onClick={() => setModal({ open: true, title: "Today's Challans" })}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            label="Monthly Trips"
-            value={stats?.monthlyTrips}
-            icon={<CalendarMonthIcon />}
-            color="success"
-          />
+        <Grid item xs={6} md={3}>
+          <StatCard label="Monthly Trips" value={stats?.monthlyTrips} icon={<CalendarMonthIcon />} color="success" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={6} md={3}>
           <StatCard label="Yearly Trips" value={stats?.yearlyTrips} icon={<EventIcon />} color="warning" />
         </Grid>
       </Grid>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1.5 }}>
-              Recent Challans
-            </Typography>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Challan No.</TableCell>
-                    <TableCell>Truck No.</TableCell>
-                    <TableCell>Place</TableCell>
-                    <TableCell>Date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {stats?.recentChallans?.map((c) => (
-                    <TableRow key={c.id} hover>
-                      <TableCell>{c.challanNumber}</TableCell>
-                      <TableCell>{c.truckNumber}</TableCell>
-                      <TableCell>{c.placeOfDelivery}</TableCell>
-                      <TableCell>{new Date(c.challanDate).toLocaleDateString('en-IN')}</TableCell>
-                    </TableRow>
-                  ))}
-                  {!stats && (
-                    <TableRow>
-                      <TableCell colSpan={4}>
-                        <Skeleton />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
+      <Paper sx={{ overflow: 'hidden' }}>
+        <Box sx={{ p: 2, pb: 1.5 }}>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Recent Activity
+          </Typography>
+        </Box>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 640 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ bgcolor: 'primary.main', color: '#fff', fontWeight: 700 }}>
+                  Challan No.
+                </TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: '#fff', fontWeight: 700 }}>
+                  Username
+                </TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: '#fff', fontWeight: 700 }}>
+                  Truck No.
+                </TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: '#fff', fontWeight: 700 }}>
+                  Place of Delivery
+                </TableCell>
+                <TableCell sx={{ bgcolor: 'primary.main', color: '#fff', fontWeight: 700 }}>
+                  Time
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {activity.map((c) => (
+                <TableRow key={c.id} hover>
+                  <TableCell sx={{ fontWeight: 600 }}>{c.challanNumber}</TableCell>
+                  <TableCell>{c.createdByUser?.name || '—'}</TableCell>
+                  <TableCell>{c.truckNumber}</TableCell>
+                  <TableCell>{c.placeOfDelivery}</TableCell>
+                  <TableCell>
+                    {new Date(c.updatedAt || c.createdAt).toLocaleTimeString('en-IN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!stats && (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Skeleton />
+                  </TableCell>
+                </TableRow>
+              )}
+              {stats && activity.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Box sx={{ py: 3, textAlign: 'center' }}>
+                      <Typography color="text.secondary">No activity yet</Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
-        <Grid item xs={12} md={5}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1.5 }}>
-              Latest Activity
-            </Typography>
-            {stats?.latestActivity?.map((c) => (
-              <Box
-                key={c.id}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  py: 1,
-                  borderBottom: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
-                    {c.challanNumber}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {c.truckNumber} → {c.placeOfDelivery}
-                  </Typography>
-                </Box>
-                <Chip
-                  size="small"
-                  label={new Date(c.updatedAt).toLocaleTimeString('en-IN', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                />
-              </Box>
-            ))}
-            {!stats && <Skeleton height={100} />}
-          </Paper>
-        </Grid>
-      </Grid>
+      <TodayListModal
+        open={modal.open}
+        title={modal.title}
+        onClose={() => setModal({ open: false, title: '' })}
+      />
     </Box>
   );
 }

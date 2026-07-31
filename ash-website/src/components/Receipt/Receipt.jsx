@@ -2,12 +2,27 @@ import React from 'react';
 import './receipt.css';
 
 /**
+ * Maps the admin who created the challan to their signature image, so the
+ * printed receipt always shows the signature of whichever admin actually
+ * created it (vijay@gmail.com vs satish@gmail.com), not a generic blank.
+ * To onboard a new admin's signature, just add another email -> file entry
+ * here and drop the image into /public/signatures/.
+ */
+const SIGNATURES_BY_EMAIL = {
+  'vijay@gmail.com': '/signatures/vijay-sign.png',
+  'satish@gmail.com': '/signatures/satish-sign.png',
+};
+
+/**
  * Renders one copy of the Ash delivery challan, matching the physical
  * pre-printed NTPC Khargone consignment pad exactly:
  * - All static header/legal text and labels are fixed, never editable.
  * - Only challanNumber, truckNumber, placeOfDelivery, date and time change.
  */
 export default function Receipt({ challan }) {
+  const creatorEmail = challan?.createdByUser?.email?.toLowerCase();
+  const signatureSrc = creatorEmail ? SIGNATURES_BY_EMAIL[creatorEmail] : undefined;
+
   const dateStr = challan?.challanDate
     ? new Date(challan.challanDate).toLocaleDateString('en-IN', {
         day: '2-digit',
@@ -66,6 +81,9 @@ export default function Receipt({ challan }) {
         </div>
 
         <div className="receipt-signature">
+          {signatureSrc && (
+            <img className="receipt-signature-img" src={signatureSrc} alt="Signature" />
+          )}
           <div>Sign &amp; Seal of</div>
           <div>Transporting agency</div>
         </div>

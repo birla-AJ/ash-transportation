@@ -1,9 +1,9 @@
-import React from 'react';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/theme';
+import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
 import Tabs from './Tabs';
 import AddChallanScreen from '../screens/AddChallanScreen';
@@ -14,15 +14,24 @@ import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// Minimum time the animated splash stays visible, regardless of how fast the
+// auth/session check finishes. Keeps the splash from flashing on quick loads.
+const MIN_SPLASH_MS = 3000;
+
 export default function RootNavigator() {
   const { user, initializing } = useAuth();
+  const [splashElapsed, setSplashElapsed] = useState(false);
 
-  if (initializing) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+  useEffect(() => {
+    const timer = setTimeout(() => setSplashElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show splash until BOTH the session check is done AND the minimum
+  // splash duration has elapsed. Once done, user goes straight to
+  // Dashboard (Tabs) if already logged in, otherwise to Login.
+  if (initializing || !splashElapsed) {
+    return <SplashScreen />;
   }
 
   return (
@@ -42,6 +51,4 @@ export default function RootNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-});
+

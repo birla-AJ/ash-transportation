@@ -54,7 +54,7 @@ export default function AuditLogsScreen() {
       </View>
       <FlatList
         data={rows}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Card style={styles.row}>
@@ -63,7 +63,7 @@ export default function AuditLogsScreen() {
               <Text style={typography.caption}>{dayjs(item.createdAt).format('DD MMM YYYY, h:mm A')}</Text>
             </View>
             <Text style={typography.bodyBold}>{item.entityType}</Text>
-            <Text style={typography.caption}>By {item.performedBy?.name || '—'}</Text>
+            <Text style={typography.caption}>By {item.performedByUser?.name || '—'}</Text>
             {item.reason ? <Text style={typography.body}>{item.reason}</Text> : null}
           </Card>
         )}

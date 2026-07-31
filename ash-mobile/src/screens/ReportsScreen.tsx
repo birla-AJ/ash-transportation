@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CompositeNavigationProp, NavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { colors, spacing } from '../theme/theme';
@@ -72,7 +73,7 @@ export default function ReportsScreen({ navigation }: { navigation: Nav }) {
   }
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <View style={styles.header}>
         <ScreenTitle>Reports</ScreenTitle>
         {error ? (
@@ -102,17 +103,17 @@ export default function ReportsScreen({ navigation }: { navigation: Nav }) {
 
       <FlatList
         data={rows}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <ChallanCard challan={item} onPress={() => navigation.navigate('ChallanDetail', { challanId: item._id })} />
+          <ChallanCard challan={item} onPress={() => navigation.navigate('ChallanDetail', { challanId: item.id })} />
         )}
         refreshing={loading}
         onRefresh={loadData}
         ListEmptyComponent={<EmptyState text={loading ? 'Loading…' : 'No records match the current filters'} />}
         ListFooterComponent={loading && rows.length ? <ActivityIndicator style={{ marginVertical: spacing(2) }} color={colors.primary} /> : null}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

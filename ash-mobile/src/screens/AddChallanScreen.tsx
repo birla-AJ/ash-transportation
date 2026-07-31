@@ -45,7 +45,7 @@ export default function AddChallanScreen({ navigation }: { navigation: Nav }) {
       setSuccess(`Challan ${challan.challanNumber} saved successfully`);
       setForm(emptyForm);
       if (andPrint) {
-        navigation.navigate('Receipt', { challanId: challan._id });
+        navigation.navigate('Receipt', { challanId: challan.id });
       }
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to save challan');

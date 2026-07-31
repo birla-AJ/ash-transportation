@@ -2,6 +2,18 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+import java.util.Properties
+
+// Release signing credentials are kept OUT of version control.
+// They live in android/keystore.properties (see keystore.properties.example)
+// which is listed in .gitignore.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+def hasReleaseKeystore = keystorePropertiesFile.exists()
+if (hasReleaseKeystore) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -55,11 +67,6 @@ react {
 }
 
 /**
- * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
- */
-def enableProguardInReleaseBuilds = false
-
-/**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
@@ -92,17 +99,36 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (hasReleaseKeystore) {
+            release {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
-            minifyEnabled enableProguardInReleaseBuilds
+            // Uses android/keystore.properties -> android/app/ash_project.keystore
+            // Falls back to the debug keystore ONLY if keystore.properties is
+            // missing, so the project still builds out of the box; you should
+            // always ship with the real release keystore.
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+        }
+    }
+
+    // Ensure a single universal APK containing all architectures is produced
+    // (armeabi-v7a, arm64-v8a, x86, x86_64) instead of per-ABI split APKs.
+    splits {
+        abi {
+            enable false
         }
     }
 }

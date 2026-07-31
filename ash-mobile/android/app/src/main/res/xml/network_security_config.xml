@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app's backend (src/config.ts -> API_BASE_URL) currently points to a
+  plain-HTTP IP address. Android blocks cleartext (non-HTTPS) traffic by
+  default in release builds, which would break every API call. This config
+  explicitly allows cleartext ONLY for that specific backend host.
+
+  Recommended fix long-term: move the backend behind HTTPS (e.g. a domain
+  with a free Let's Encrypt certificate) and remove this exception entirely.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">13.235.83.11</domain>
+    </domain-config>
+</network-security-config>

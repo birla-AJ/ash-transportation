@@ -7,7 +7,7 @@ export interface User {
 }
 
 export interface Challan {
-  _id: string;
+  id: string;
   challanNumber: string;
   challanSequence: number;
   truckNumber: string;
@@ -75,10 +75,10 @@ export interface AppSettings {
 }
 
 export interface AuditLog {
-  _id: string;
+  id: string;
   action: string;
   entityType: string;
-  performedBy?: { name: string } | null;
+  performedByUser?: { name: string } | null;
   reason?: string | null;
   createdAt: string;
 }
