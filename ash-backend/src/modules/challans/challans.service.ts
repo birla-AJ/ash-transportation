@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { resolveDateRange } from '../../common/utils/date-range.util';
+import { formatIstTime24h } from '../../common/utils/ist-time.util';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { CreateChallanDto } from './dto/create-challan.dto';
 import { DeleteChallanDto } from './dto/delete-challan.dto';
@@ -35,8 +36,9 @@ export class ChallansService {
   }
 
   private formatChallanNumber(sequence: number): string {
-   
-     return sequence.toString();
+    const prefix = this.config.get<string>('challan.prefix') || 'ASH';
+    const padLength = this.config.get<number>('challan.padLength') || 6;
+    return `${prefix}-${String(sequence).padStart(padLength, '0')}`;
   }
 
   private buildWhere(
@@ -78,7 +80,7 @@ export class ChallansService {
         truckNumber: dto.truckNumber.trim(),
         placeOfDelivery: dto.placeOfDelivery.trim(),
         challanDate: now,
-        challanTime: now.toTimeString().slice(0, 5),
+        challanTime: formatIstTime24h(now),
         createdBy: userId,
       },
       include: { createdByUser: USER_SELECT },
