@@ -125,27 +125,35 @@ export default function Reports() {
       },
       {
         headerName: 'Time',
-        field: 'challanTime',
+        field: 'createdAt',
         filter: 'agTextColumnFilter',
         floatingFilter: true,
         minWidth: 100,
+        valueFormatter: (p) =>
+          p.value
+            ? new Date(p.value).toLocaleTimeString('en-IN', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              })
+            : '',
       },
-      {
-        headerName: 'Created At',
-        field: 'createdAt',
-        filter: 'agDateColumnFilter',
-        floatingFilter: true,
-        minWidth: 170,
-        valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString('en-IN') : ''),
-      },
-      {
-        headerName: 'Updated At',
-        field: 'updatedAt',
-        filter: 'agDateColumnFilter',
-        floatingFilter: true,
-        minWidth: 170,
-        valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString('en-IN') : ''),
-      },
+      // {
+      //   headerName: 'Created At',
+      //   field: 'createdAt',
+      //   filter: 'agDateColumnFilter',
+      //   floatingFilter: true,
+      //   minWidth: 170,
+      //   valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString('en-IN') : ''),
+      // },
+      // {
+      //   headerName: 'Updated At',
+      //   field: 'updatedAt',
+      //   filter: 'agDateColumnFilter',
+      //   floatingFilter: true,
+      //   minWidth: 170,
+      //   valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString('en-IN') : ''),
+      // },
       {
         headerName: 'Actions',
         field: 'actions',

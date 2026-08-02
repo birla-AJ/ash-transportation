@@ -162,13 +162,13 @@ export default function Dashboard() {
                   <TableCell>{c.createdByUser?.name || '—'}</TableCell>
                   <TableCell>{c.truckNumber}</TableCell>
                   <TableCell>{c.placeOfDelivery}</TableCell>
-                  {/* <TableCell>
-                    {new Date(c.updatedAt || c.createdAt).toLocaleTimeString('en-IN', {
+                  <TableCell>
+                    {new Date(c.createdAt).toLocaleTimeString('en-IN', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </TableCell> */}
-                  <TableCell>{c.challanTime}</TableCell>
+                  </TableCell>
+                  {/* <TableCell>{c.challanTime}</TableCell> */}
                 </TableRow>
               ))}
               {!stats && (

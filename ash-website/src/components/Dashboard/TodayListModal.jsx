@@ -94,7 +94,7 @@ export default function TodayListModal({ open, onClose, title }) {
                     <TableCell>{c.truckNumber}</TableCell>
                     <TableCell>{c.placeOfDelivery}</TableCell>
                     <TableCell>
-                      {c.challanTime || new Date(c.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(c.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </TableCell>
                   </TableRow>
                 ))}
