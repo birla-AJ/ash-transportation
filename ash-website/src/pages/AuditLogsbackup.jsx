@@ -23,32 +23,20 @@ const ACTION_COLORS = {
   USER_LOGOUT: 'default',
 };
 
-// Only these actions should be visible in the Audit Logs table.
-// Everything else (updates, deletes, reprints, logouts, etc.) is still
-// recorded in the database, it's just filtered out of this view.
-const VISIBLE_ACTIONS = ['USER_LOGIN', 'CHALLAN_CREATE'];
-
 export default function AuditLogs() {
-  const [allRows, setAllRows] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(20);
 
   useEffect(() => {
-    setLoading(true);
-    // Fetch a large batch once (backend has no upper limit on `limit`),
-    // then filter + paginate on the client so no backend change is needed.
     apiClient
-      .get('/audit-logs', { params: { page: 1, limit: 2000, sortBy: 'createdAt', sortOrder: 'desc' } })
+      .get('/audit-logs', { params: { page: page + 1, limit } })
       .then(({ data }) => {
-        const filtered = (data.data.items || []).filter((log) => VISIBLE_ACTIONS.includes(log.action));
-        setAllRows(filtered);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const total = allRows.length;
-  const rows = allRows.slice(page * limit, page * limit + limit);
+        setRows(data.data.items);
+        setTotal(data.data.meta.total);
+      });
+  }, [page, limit]);
 
   return (
     <Box>
@@ -63,7 +51,7 @@ export default function AuditLogs() {
                 <TableCell>Action</TableCell>
                 <TableCell>Entity</TableCell>
                 <TableCell>Performed By</TableCell>
-                <TableCell>Driver</TableCell>
+                <TableCell>Reason</TableCell>
                 <TableCell>When</TableCell>
               </TableRow>
             </TableHead>
@@ -75,23 +63,10 @@ export default function AuditLogs() {
                   </TableCell>
                   <TableCell>{log.entityType}</TableCell>
                   <TableCell>{log.performedByUser?.name || '—'}</TableCell>
-                  <TableCell>
-                    {log.action === 'CHALLAN_CREATE'
-                      ? log.after?.placeOfDelivery || '—'
-                      : log.reason || '—'}
-                  </TableCell>
+                  <TableCell>{log.reason || '—'}</TableCell>
                   <TableCell>{new Date(log.createdAt).toLocaleString('en-IN')}</TableCell>
                 </TableRow>
               ))}
-              {!loading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <Box sx={{ py: 3, textAlign: 'center' }}>
-                      <Typography color="text.secondary">No matching activity</Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </TableContainer>

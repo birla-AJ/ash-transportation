@@ -14,23 +14,6 @@ const SIGNATURES_BY_EMAIL = {
 };
 
 /**
- * Converts a stored 24-hour "HH:mm" time string to a 12-hour "hh:mm AM/PM"
- * string for display on the printed receipt. Storage stays 24-hour
- * because the Edit Challan dialog's native <input type="time"> requires
- * that exact format; only the receipt should show it in 12-hour form.
- */
-function formatTime12h(time24) {
-  if (!time24) return '';
-  const [hStr, mStr] = time24.split(':');
-  const h = Number(hStr);
-  if (Number.isNaN(h)) return time24;
-  const period = h >= 12 ? 'PM' : 'AM';
-  let h12 = h % 12;
-  if (h12 === 0) h12 = 12;
-  return `${String(h12).padStart(2, '0')}:${mStr} ${period}`;
-}
-
-/**
  * Renders one copy of the Ash delivery challan, matching the physical
  * pre-printed NTPC Khargone consignment pad exactly:
  * - All static header/legal text and labels are fixed, never editable.
@@ -94,7 +77,7 @@ export default function Receipt({ challan }) {
         </div>
         <div className="receipt-field short">
           <span className="field-label">Time :</span>
-          <span className="field-value">{formatTime12h(challan?.challanTime)}</span>
+          <span className="field-value">{challan?.challanTime || ''}</span>
         </div>
 
         <div className="receipt-signature">

@@ -76,7 +76,8 @@ export default function Dashboard() {
     getDashboardStats().then(setStats).catch(() => setStats({}));
   }, []);
 
-  const activity = stats?.latestActivity?.length ? stats.latestActivity : stats?.recentChallans || [];
+  // const activity = stats?.latestActivity?.length ? stats.latestActivity : stats?.recentChallans || [];
+  const activity = stats?.recentChallans || [];
 
   return (
     <Box>
@@ -161,12 +162,13 @@ export default function Dashboard() {
                   <TableCell>{c.createdByUser?.name || '—'}</TableCell>
                   <TableCell>{c.truckNumber}</TableCell>
                   <TableCell>{c.placeOfDelivery}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {new Date(c.updatedAt || c.createdAt).toLocaleTimeString('en-IN', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </TableCell>
+                  </TableCell> */}
+                  <TableCell>{c.challanTime}</TableCell>
                 </TableRow>
               ))}
               {!stats && (
