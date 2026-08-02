@@ -100,6 +100,7 @@ export default function Reports() {
         filter: 'agTextColumnFilter',
         floatingFilter: true,
         minWidth: 160,
+        flex: 1,
       },
       {
         headerName: 'Truck Number',
@@ -107,6 +108,7 @@ export default function Reports() {
         filter: 'agTextColumnFilter',
         floatingFilter: true,
         minWidth: 150,
+        flex: 1,
       },
       {
         headerName: 'Place',
@@ -114,6 +116,7 @@ export default function Reports() {
         filter: 'agTextColumnFilter',
         floatingFilter: true,
         minWidth: 180,
+        flex: 1,
       },
       {
         headerName: 'Date',
@@ -121,6 +124,7 @@ export default function Reports() {
         filter: 'agDateColumnFilter',
         floatingFilter: true,
         minWidth: 130,
+        flex: 1,
         valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleDateString('en-IN') : ''),
       },
       {
@@ -129,6 +133,7 @@ export default function Reports() {
         filter: 'agTextColumnFilter',
         floatingFilter: true,
         minWidth: 100,
+        flex: 1,
         valueFormatter: (p) =>
           p.value
             ? new Date(p.value).toLocaleTimeString('en-IN', {
@@ -144,6 +149,7 @@ export default function Reports() {
       //   filter: 'agDateColumnFilter',
       //   floatingFilter: true,
       //   minWidth: 170,
+      //   flex: 1,
       //   valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString('en-IN') : ''),
       // },
       // {
@@ -152,6 +158,7 @@ export default function Reports() {
       //   filter: 'agDateColumnFilter',
       //   floatingFilter: true,
       //   minWidth: 170,
+      //   flex: 1,
       //   valueFormatter: (p) => (p.value ? new Date(p.value).toLocaleString('en-IN') : ''),
       // },
       {
@@ -161,6 +168,7 @@ export default function Reports() {
         filter: false,
         floatingFilter: false,
         minWidth: 160,
+        flex: 1,
         pinned: 'right',
         cellRenderer: (params) => (
           <Stack direction="row" spacing={0.5}>
