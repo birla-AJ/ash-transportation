@@ -79,12 +79,13 @@ export class ChallansService {
         challanDate: now,
         // Always format in IST regardless of the server's own system
         // timezone (e.g. UTC on most hosts) — toTimeString() would silently
-        // give the wrong wall-clock time otherwise.
-        challanTime: now.toLocaleTimeString('en-GB', {
+        // give the wrong wall-clock time otherwise. 12-hour AM/PM to match
+        // how time is shown everywhere else in the app (Dashboard, Reports).
+        challanTime: now.toLocaleTimeString('en-IN', {
           timeZone: 'Asia/Kolkata',
-          hour: '2-digit',
+          hour: 'numeric',
           minute: '2-digit',
-          hour12: false,
+          hour12: true,
         }),
         createdBy: userId,
       },

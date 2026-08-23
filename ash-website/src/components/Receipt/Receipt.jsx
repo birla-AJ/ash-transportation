@@ -38,9 +38,9 @@ export default function Receipt({ challan }) {
   // always renders correctly in the browser's local (IST) timezone.
   const timeStr = challan?.createdAt
     ? new Date(challan.createdAt).toLocaleTimeString('en-IN', {
-        hour: '2-digit',
+        hour: 'numeric',
         minute: '2-digit',
-        hour12: false,
+        hour12: true,
       })
     : challan?.challanTime || '';
 
