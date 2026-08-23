@@ -31,6 +31,19 @@ export default function Receipt({ challan }) {
       })
     : '';
 
+  // Derive the printed time from createdAt (same source Dashboard/Reports
+  // use) instead of the stored challanTime string — challanTime was being
+  // written in the server's system timezone (UTC) instead of IST, so old
+  // records still carry a wrong value. createdAt is a real timestamp and
+  // always renders correctly in the browser's local (IST) timezone.
+  const timeStr = challan?.createdAt
+    ? new Date(challan.createdAt).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
+    : challan?.challanTime || '';
+
   return (
     <div className="receipt-page">
       <div className="receipt-border">
@@ -77,7 +90,7 @@ export default function Receipt({ challan }) {
         </div>
         <div className="receipt-field short">
           <span className="field-label">Time :</span>
-          <span className="field-value">{challan?.challanTime || ''}</span>
+          <span className="field-value">{timeStr}</span>
         </div>
 
         <div className="receipt-signature">

@@ -77,7 +77,15 @@ export class ChallansService {
         truckNumber: dto.truckNumber.trim(),
         placeOfDelivery: dto.placeOfDelivery.trim(),
         challanDate: now,
-        challanTime: now.toTimeString().slice(0, 5),
+        // Always format in IST regardless of the server's own system
+        // timezone (e.g. UTC on most hosts) — toTimeString() would silently
+        // give the wrong wall-clock time otherwise.
+        challanTime: now.toLocaleTimeString('en-GB', {
+          timeZone: 'Asia/Kolkata',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }),
         createdBy: userId,
       },
       include: { createdByUser: USER_SELECT },
