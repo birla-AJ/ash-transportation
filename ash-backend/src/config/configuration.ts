@@ -25,6 +25,14 @@ export default () => ({
     name: process.env.ADMIN_NAME || 'Administrator',
   },
 
+  // Top of the role hierarchy. This account is created once by the seed
+  // script and can only add/remove Sub Admins — nothing else.
+  superAdmin: {
+    email: process.env.SUPER_ADMIN_EMAIL || 'superadmin@gmail.com',
+    password: process.env.SUPER_ADMIN_PASSWORD || 'As123456!',
+    name: process.env.SUPER_ADMIN_NAME || 'Super Admin',
+  },
+
   challan: {
     prefix: process.env.CHALLAN_PREFIX || 'ASH',
     padLength: parseInt(process.env.CHALLAN_PAD_LENGTH ?? '6', 10),

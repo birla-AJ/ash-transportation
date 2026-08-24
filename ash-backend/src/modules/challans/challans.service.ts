@@ -263,4 +263,39 @@ export class ChallansService {
       latestActivity: recentAudit,
     };
   }
+
+  /**
+   * Total (non-deleted) challan count plus a per-creator breakdown, for the
+   * Sub Admin dashboard's "which admin created how many challans" graph.
+   * Only counts challans created by users who currently hold the given role
+   * (defaults to 'admin', the operational challan-creators).
+   */
+  async adminPerformanceStats(role: string = 'admin') {
+    const admins = await this.prisma.user.findMany({
+      where: { role },
+      select: { id: true, name: true, email: true, isActive: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const totalChallans = await this.prisma.challan.count({ where: { isDeleted: false } });
+
+    const counts = await this.prisma.challan.groupBy({
+      by: ['createdBy'],
+      where: { isDeleted: false, createdBy: { in: admins.map((a) => a.id) } },
+      _count: { _all: true },
+    });
+    const countByUserId = new Map(counts.map((c) => [c.createdBy, c._count._all]));
+
+    const perAdmin = admins
+      .map((a) => ({
+        userId: a.id,
+        name: a.name,
+        email: a.email,
+        isActive: a.isActive,
+        challanCount: countByUserId.get(a.id) || 0,
+      }))
+      .sort((a, b) => b.challanCount - a.challanCount);
+
+    return { totalChallans, totalAdmins: admins.length, perAdmin };
+  }
 }

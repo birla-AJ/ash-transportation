@@ -11,7 +11,12 @@ export type AuditAction =
   | 'USER_LOGIN'
   | 'USER_LOGOUT'
   | 'USER_CREATE'
-  | 'USER_UPDATE';
+  | 'USER_UPDATE'
+  | 'SUB_ADMIN_CREATED'
+  | 'SUB_ADMIN_DELETED'
+  | 'ADMIN_CREATED'
+  | 'ADMIN_DELETED'
+  | 'ADMIN_STATUS_CHANGED';
 
 export interface CreateAuditLogInput {
   action: AuditAction;

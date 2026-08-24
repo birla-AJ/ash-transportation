@@ -34,6 +34,29 @@ async function seed() {
     console.log('IMPORTANT: Change this password immediately after first login.');
   }
 
+  const superAdminEmail = (config.get<string>('superAdmin.email') || '').toLowerCase();
+  const superAdminPassword = config.get<string>('superAdmin.password') as string;
+  const superAdminName = config.get<string>('superAdmin.name') as string;
+
+  const existingSuperAdmin = await prisma.user.findUnique({ where: { email: superAdminEmail } });
+  if (existingSuperAdmin) {
+    // eslint-disable-next-line no-console
+    console.log(`Super admin already exists: ${superAdminEmail}`);
+  } else {
+    const hashed = await bcrypt.hash(superAdminPassword, 10);
+    await prisma.user.create({
+      data: {
+        name: superAdminName,
+        email: superAdminEmail,
+        password: hashed,
+        role: 'super_admin',
+        isActive: true,
+      },
+    });
+    // eslint-disable-next-line no-console
+    console.log(`Created super admin: ${superAdminEmail} / ${superAdminPassword}`);
+  }
+
   const existingSettings = await prisma.settings.findUnique({ where: { key: 'app_settings' } });
   if (!existingSettings) {
     await prisma.settings.create({ data: { key: 'app_settings' } });

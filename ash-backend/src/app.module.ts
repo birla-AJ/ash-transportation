@@ -14,6 +14,7 @@ import { ExportModule } from './modules/export/export.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AdminManagementModule } from './modules/admin-management/admin-management.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     SettingsModule,
     AuditLogsModule,
     DashboardModule,
+    AdminManagementModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

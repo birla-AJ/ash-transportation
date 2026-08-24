@@ -34,6 +34,59 @@ export class UsersService {
     return users.map((u) => this.stripPassword(u));
   }
 
+  /** Create a user pinned to a specific role, bypassing the schema's default. */
+  async createWithRole(dto: CreateUserDto, role: string) {
+    const email = dto.email.toLowerCase();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException('A user with this email already exists');
+    }
+    const hashed = await bcrypt.hash(dto.password, SALT_ROUNDS);
+    const user = await this.prisma.user.create({
+      data: { name: dto.name, email, password: hashed, role },
+    });
+    return this.stripPassword(user);
+  }
+
+  /** List users of exactly one role, most recently created first. */
+  async findAllByRole(role: string) {
+    const users = await this.prisma.user.findMany({
+      where: { role },
+      orderBy: { createdAt: 'desc' },
+    });
+    return users.map((u) => this.stripPassword(u));
+  }
+
+  async setActive(id: string, role: string, isActive: boolean) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user || user.role !== role) {
+      throw new NotFoundException('User not found');
+    }
+    const updated = await this.prisma.user.update({ where: { id }, data: { isActive } });
+    return this.stripPassword(updated);
+  }
+
+  /**
+   * Delete a user, scoped to an expected role so a sub admin can't be
+   * deleted through the admin-deletion endpoint and vice versa.
+   * Fails with a clear message if the user already has challans or audit
+   * history attached (the DB foreign keys block a hard delete in that case)
+   * — deactivating is the safe alternative for those accounts.
+   */
+  async deleteByIdAndRole(id: string, role: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user || user.role !== role) {
+      throw new NotFoundException('User not found');
+    }
+    try {
+      await this.prisma.user.delete({ where: { id } });
+    } catch {
+      throw new ConflictException(
+        'This user already has challans or activity linked to their account and cannot be deleted. Deactivate them instead.',
+      );
+    }
+  }
+
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     return user ? this.stripPassword(user) : null;
