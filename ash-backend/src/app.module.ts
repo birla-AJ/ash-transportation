@@ -15,6 +15,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AdminManagementModule } from './modules/admin-management/admin-management.module';
+import { TransportersModule } from './modules/transporters/transporters.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AdminManagementModule } from './modules/admin-management/admin-manageme
     AuditLogsModule,
     DashboardModule,
     AdminManagementModule,
+    TransportersModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

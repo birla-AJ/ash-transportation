@@ -4,6 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { SetActiveDto } from './dto/set-active.dto';
+import { SetSignatureDto } from './dto/set-signature.dto';
 import { UsersService } from '../users/users.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ChallansService } from '../challans/challans.service';
@@ -66,6 +67,24 @@ export class SubAdminController {
       entityId: id,
       performedBy: userId,
       after: { isActive: dto.isActive },
+    });
+    return admin;
+  }
+
+  @Patch('admins/:id/signature')
+  @ApiOperation({ summary: "Set or update an Admin's signature image" })
+  async setAdminSignature(
+    @Param('id') id: string,
+    @Body() dto: SetSignatureDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const admin = await this.usersService.setSignature(id, 'admin', dto.signatureImage);
+    await this.auditLogsService.log({
+      action: 'ADMIN_STATUS_CHANGED',
+      entityType: 'User',
+      entityId: id,
+      performedBy: userId,
+      after: { signatureUpdated: true },
     });
     return admin;
   }

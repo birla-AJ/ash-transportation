@@ -9,7 +9,7 @@ import { DeleteChallanDto } from './dto/delete-challan.dto';
 import { QueryChallanDto } from './dto/query-challan.dto';
 import { UpdateChallanDto } from './dto/update-challan.dto';
 
-const USER_SELECT = { select: { id: true, name: true, email: true } };
+const USER_SELECT = { select: { id: true, name: true, email: true, signatureImage: true } };
 
 @Injectable()
 export class ChallansService {
@@ -88,8 +88,9 @@ export class ChallansService {
           hour12: true,
         }),
         createdBy: userId,
+        transporterId: dto.transporterId,
       },
-      include: { createdByUser: USER_SELECT },
+      include: { createdByUser: USER_SELECT, transporter: true },
     });
 
     await this.auditLogsService.log({
@@ -116,7 +117,7 @@ export class ChallansService {
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
-        include: { createdByUser: USER_SELECT, updatedByUser: USER_SELECT },
+        include: { createdByUser: USER_SELECT, updatedByUser: USER_SELECT, transporter: true },
       }),
       this.prisma.challan.count({ where }),
     ]);
@@ -139,7 +140,7 @@ export class ChallansService {
   async findOne(id: string) {
     const challan = await this.prisma.challan.findUnique({
       where: { id },
-      include: { createdByUser: USER_SELECT, updatedByUser: USER_SELECT },
+      include: { createdByUser: USER_SELECT, updatedByUser: USER_SELECT, transporter: true },
     });
     if (!challan) throw new NotFoundException('Challan not found');
     return challan;
@@ -158,9 +159,10 @@ export class ChallansService {
         ...(dto.placeOfDelivery !== undefined && { placeOfDelivery: dto.placeOfDelivery.trim() }),
         ...(dto.challanDate !== undefined && { challanDate: new Date(dto.challanDate) }),
         ...(dto.challanTime !== undefined && { challanTime: dto.challanTime }),
+        ...(dto.transporterId !== undefined && { transporterId: dto.transporterId }),
         updatedBy: userId,
       },
-      include: { createdByUser: USER_SELECT, updatedByUser: USER_SELECT },
+      include: { createdByUser: USER_SELECT, updatedByUser: USER_SELECT, transporter: true },
     });
 
     await this.auditLogsService.log({
@@ -209,7 +211,7 @@ export class ChallansService {
     const challan = await this.prisma.challan.update({
       where: { id },
       data: { printCount: existing.printCount + 1, lastPrintedAt: new Date() },
-      include: { createdByUser: USER_SELECT },
+      include: { createdByUser: USER_SELECT, transporter: true },
     });
 
     await this.auditLogsService.log({

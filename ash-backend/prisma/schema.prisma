@@ -14,15 +14,20 @@ model User {
   password           String
   role               String    @default("admin")
   isActive           Boolean   @default(true)
+  // Base64 data URL of the admin's signature (e.g. "data:image/png;base64,...").
+  // Set by the Sub Admin when adding/editing an Admin. Printed on every
+  // challan that admin creates, in place of the old hardcoded email->file map.
+  signatureImage     String?
   lastLoginAt        DateTime?
   refreshTokenHashes String[]  @default([])
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  createdChallans Challan[]  @relation("ChallanCreatedBy")
-  updatedChallans Challan[]  @relation("ChallanUpdatedBy")
-  deletedChallans Challan[]  @relation("ChallanDeletedBy")
-  auditLogs       AuditLog[] @relation("AuditPerformedBy")
+  createdChallans     Challan[]     @relation("ChallanCreatedBy")
+  updatedChallans     Challan[]     @relation("ChallanUpdatedBy")
+  deletedChallans     Challan[]     @relation("ChallanDeletedBy")
+  auditLogs           AuditLog[]    @relation("AuditPerformedBy")
+  createdTransporters Transporter[] @relation("TransporterCreatedBy")
 
   @@map("users")
 }
@@ -49,6 +54,11 @@ model Challan {
   updatedBy     String?
   updatedByUser User?   @relation("ChallanUpdatedBy", fields: [updatedBy], references: [id])
 
+  // Nullable so the 14 challans created before this feature don't break —
+  // every new challan going forward is required (by the API layer) to pick one.
+  transporterId String?
+  transporter   Transporter? @relation(fields: [transporterId], references: [id])
+
   printCount    Int       @default(0)
   lastPrintedAt DateTime?
 
@@ -61,7 +71,29 @@ model Challan {
   @@index([isDeleted])
   @@index([createdAt])
   @@index([updatedAt])
+  @@index([transporterId])
   @@map("challans")
+}
+
+/// A transporter company Sub Admins maintain — printed as the "Transporter
+/// Name" / "Add:" block on every challan, selected from a dropdown when an
+/// Admin creates one.
+model Transporter {
+  id       String  @id @default(uuid())
+  name     String
+  address  String
+  isActive Boolean @default(true)
+
+  createdBy     String
+  createdByUser User   @relation("TransporterCreatedBy", fields: [createdBy], references: [id])
+
+  challans Challan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("transporters")
 }
 
 /// Single-row counter used with an atomic upsert+increment to generate

@@ -43,9 +43,19 @@ export class UsersService {
     }
     const hashed = await bcrypt.hash(dto.password, SALT_ROUNDS);
     const user = await this.prisma.user.create({
-      data: { name: dto.name, email, password: hashed, role },
+      data: { name: dto.name, email, password: hashed, role, signatureImage: dto.signatureImage },
     });
     return this.stripPassword(user);
+  }
+
+  /** Update (or add) an existing user's signature image, scoped to their role. */
+  async setSignature(id: string, role: string, signatureImage: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user || user.role !== role) {
+      throw new NotFoundException('User not found');
+    }
+    const updated = await this.prisma.user.update({ where: { id }, data: { signatureImage } });
+    return this.stripPassword(updated);
   }
 
   /** List users of exactly one role, most recently created first. */

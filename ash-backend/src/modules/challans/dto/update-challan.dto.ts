@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsDateString, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class UpdateChallanDto {
   @ApiPropertyOptional({ example: 'GJ01AB1234' })
@@ -23,4 +23,9 @@ export class UpdateChallanDto {
   @IsOptional()
   @IsString()
   challanTime?: string;
+
+  @ApiPropertyOptional({ example: 'a1b2c3d4-...' })
+  @IsOptional()
+  @IsUUID()
+  transporterId?: string;
 }
