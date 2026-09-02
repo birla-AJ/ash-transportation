@@ -2,26 +2,16 @@ import React from 'react';
 import './receipt.css';
 
 /**
- * Maps the admin who created the challan to their signature image, so the
- * printed receipt always shows the signature of whichever admin actually
- * created it (vijay@gmail.com vs satish@gmail.com), not a generic blank.
- * To onboard a new admin's signature, just add another email -> file entry
- * here and drop the image into /public/signatures/.
- */
-const SIGNATURES_BY_EMAIL = {
-  'vijay@gmail.com': '/signatures/vijay-sign.png',
-  'satish@gmail.com': '/signatures/satish-sign.png',
-};
-
-/**
  * Renders one copy of the Ash delivery challan, matching the physical
  * pre-printed NTPC Khargone consignment pad exactly:
  * - All static header/legal text and labels are fixed, never editable.
- * - Only challanNumber, truckNumber, placeOfDelivery, date and time change.
+ * - Transporter name/address come from the transporter selected on the
+ *   challan (managed by Sub Admins, picked by Admins in Add Challan).
+ * - The signature shown is whichever admin created this challan's own
+ *   signature image (set by their Sub Admin) — not a hardcoded email map.
  */
 export default function Receipt({ challan }) {
-  const creatorEmail = challan?.createdByUser?.email?.toLowerCase();
-  const signatureSrc = creatorEmail ? SIGNATURES_BY_EMAIL[creatorEmail] : undefined;
+  const signatureSrc = challan?.createdByUser?.signatureImage || undefined;
 
   const dateStr = challan?.challanDate
     ? new Date(challan.challanDate).toLocaleDateString('en-IN', {
@@ -63,10 +53,9 @@ export default function Receipt({ challan }) {
         <div className="receipt-line">LOA NO- CPG-1/Rate_Contract/Ash/Khargone/2025/1/V0</div>
 
         <div className="receipt-line">
-          Transporter Name: <span className="bold">SONU MONU ROADLINES</span>
+          Transporter Name: <span className="bold">{challan?.transporter?.name || ''}</span>
         </div>
-        <div className="receipt-line">Add: SANDASINGHA,SASON, SANDASINGHA,SAMBAPUR</div>
-        <div className="receipt-line">ODISHA INDIA- 768003</div>
+        <div className="receipt-line">Add: {challan?.transporter?.address || ''}</div>
 
         <div className="receipt-small-line">
           Transporter is fully responsible for all statutory requirements, insurance,

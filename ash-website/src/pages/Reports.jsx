@@ -119,6 +119,15 @@ export default function Reports() {
         flex: 1,
       },
       {
+        headerName: 'Transporter',
+        field: 'transporter.name',
+        filter: 'agTextColumnFilter',
+        floatingFilter: true,
+        minWidth: 170,
+        flex: 1,
+        valueGetter: (p) => p.data?.transporter?.name || '',
+      },
+      {
         headerName: 'Date',
         field: 'challanDate',
         filter: 'agDateColumnFilter',

@@ -16,6 +16,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { useAuth } from '../context/AuthContext';
+import { homePathForRole } from '../utils/roleHome';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -33,8 +34,8 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login({ email, password, rememberMe });
-      const redirectTo = location.state?.from?.pathname || '/dashboard';
+      const loggedInUser = await login({ email, password, rememberMe });
+      const redirectTo = location.state?.from?.pathname || homePathForRole(loggedInUser.role);
       navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password');

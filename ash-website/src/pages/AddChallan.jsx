@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Paper,
@@ -8,21 +8,41 @@ import {
   Stack,
   Alert,
   Dialog,
+  Autocomplete,
+  CircularProgress,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import PrintIcon from '@mui/icons-material/Print';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { createChallan } from '../api/challansApi';
+import { fetchActiveTransporters } from '../api/transportersApi';
 import ReceiptPrintView from '../components/Receipt/ReceiptPrintView';
 
 const emptyForm = { truckNumber: '', placeOfDelivery: '' };
 
 export default function AddChallan() {
   const [form, setForm] = useState(emptyForm);
+  // Transporter selection lives outside `form` and is NOT reset after each
+  // save — an admin usually runs a whole batch of challans for the same
+  // transporter, so keeping it selected is what makes back-to-back receipts
+  // quick. They can still change it any time.
+  const [transporter, setTransporter] = useState(null);
+  const [transporters, setTransporters] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [printChallan, setPrintChallan] = useState(null);
+
+  useEffect(() => {
+    fetchActiveTransporters()
+      .then((list) => {
+        setTransporters(list);
+        // Only one transporter on file? Pick it automatically — one less
+        // click for the common case, still changeable via the dropdown.
+        if (list.length === 1) setTransporter(list[0]);
+      })
+      .catch(() => setTransporters([]));
+  }, []);
 
   function handleChange(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -37,6 +57,7 @@ export default function AddChallan() {
   function validate() {
     if (!form.truckNumber.trim()) return 'Truck Number is required';
     if (!form.placeOfDelivery.trim()) return 'Place Of Delivery is required';
+    if (!transporter) return 'Please select a Transporter';
     return '';
   }
 
@@ -49,7 +70,7 @@ export default function AddChallan() {
     setError('');
     setSaving(true);
     try {
-      const challan = await createChallan(form);
+      const challan = await createChallan({ ...form, transporterId: transporter.id });
       setSuccess(`Challan ${challan.challanNumber} saved successfully`);
       setForm(emptyForm);
       if (andPrint) {
@@ -81,6 +102,36 @@ export default function AddChallan() {
         )}
 
         <Stack spacing={2.5}>
+          <Autocomplete
+            options={transporters || []}
+            getOptionLabel={(t) => t.name || ''}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            value={transporter}
+            onChange={(_, value) => setTransporter(value)}
+            loading={transporters === null}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Transporter"
+                required
+                placeholder="Select transporter"
+                helperText={
+                  transporters?.length === 0
+                    ? 'No transporters yet — ask your Sub Admin to add one'
+                    : ' '
+                }
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {transporters === null ? <CircularProgress size={18} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
           <TextField
             label="Truck Number"
             required

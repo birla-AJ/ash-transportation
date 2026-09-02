@@ -1,7 +1,7 @@
 import apiClient from './apiClient';
 
-export async function createChallan({ truckNumber, placeOfDelivery }) {
-  const { data } = await apiClient.post('/challans', { truckNumber, placeOfDelivery });
+export async function createChallan({ truckNumber, placeOfDelivery, transporterId }) {
+  const { data } = await apiClient.post('/challans', { truckNumber, placeOfDelivery, transporterId });
   return data.data;
 }
 

@@ -8,11 +8,15 @@ import {
   TextField,
   Stack,
   Alert,
+  Autocomplete,
 } from '@mui/material';
 import dayjs from 'dayjs';
+import { fetchActiveTransporters } from '../../api/transportersApi';
 
 export default function EditChallanDialog({ challan, onClose, onSave }) {
   const [form, setForm] = useState(null);
+  const [transporter, setTransporter] = useState(null);
+  const [transporters, setTransporters] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,9 +28,26 @@ export default function EditChallanDialog({ challan, onClose, onSave }) {
         challanDate: dayjs(challan.challanDate).format('YYYY-MM-DD'),
         challanTime: challan.challanTime,
       });
+      setTransporter(challan.transporter || null);
       setError('');
     }
   }, [challan]);
+
+  useEffect(() => {
+    fetchActiveTransporters()
+      .then((list) => {
+        // The challan's current transporter might have since been
+        // deactivated — keep it selectable in this dialog even if it's
+        // no longer in the active list, so editing doesn't force a change.
+        if (challan?.transporter && !list.some((t) => t.id === challan.transporter.id)) {
+          setTransporters([challan.transporter, ...list]);
+        } else {
+          setTransporters(list);
+        }
+      })
+      .catch(() => setTransporters([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [challan?.id]);
 
   if (!form) return null;
 
@@ -35,9 +56,13 @@ export default function EditChallanDialog({ challan, onClose, onSave }) {
       setError('Truck Number and Place Of Delivery are required');
       return;
     }
+    if (!transporter) {
+      setError('Please select a Transporter');
+      return;
+    }
     setLoading(true);
     try {
-      await onSave(challan.id, form);
+      await onSave(challan.id, { ...form, transporterId: transporter.id });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update challan');
     } finally {
@@ -55,6 +80,15 @@ export default function EditChallanDialog({ challan, onClose, onSave }) {
           </Alert>
         )}
         <Stack spacing={2.5} sx={{ mt: 1 }}>
+          <Autocomplete
+            options={transporters || []}
+            getOptionLabel={(t) => t.name || ''}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            value={transporter}
+            onChange={(_, value) => setTransporter(value)}
+            loading={transporters === null}
+            renderInput={(params) => <TextField {...params} label="Transporter" required />}
+          />
           <TextField
             label="Truck Number"
             fullWidth
