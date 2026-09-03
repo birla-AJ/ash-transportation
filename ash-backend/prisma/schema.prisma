@@ -38,7 +38,12 @@ model Challan {
   challanSequence Int
   truckNumber     String
   placeOfDelivery String
+  // driverName/driverNumber/managerName are only collected + printed for
+  // transporters whose challan template is VEDANT_LOADING_TOKEN (see
+  // Transporter.templateType) — left blank for the standard NTPC design.
   driverName      String?
+  driverNumber    String?
+  managerName     String?
   challanDate     DateTime
   challanTime     String
   isDeleted       Boolean   @default(false)
@@ -83,6 +88,16 @@ model Transporter {
   name     String
   address  String
   isActive Boolean @default(true)
+  // Which printed challan layout this transporter uses:
+  // - "NTPC_CHALLAN": the standard NTPC Khargone consignment design
+  //   (Truck No / Place of Delivery, "Issued to" line, etc.)
+  // - "VEDANT_LOADING_TOKEN": Vedant Transport Carrier's own Loading Token
+  //   design (Voucher No / Party Name / Vehicle No / Driver Name / Driver
+  //   Number / Manager).
+  // Set by the Sub Admin when adding the transporter; drives which React
+  // component the website/mobile Receipt renders for that transporter's
+  // challans.
+  templateType String @default("NTPC_CHALLAN")
 
   createdBy     String
   createdByUser User   @relation("TransporterCreatedBy", fields: [createdBy], references: [id])

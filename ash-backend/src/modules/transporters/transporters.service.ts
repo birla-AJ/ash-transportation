@@ -21,7 +21,12 @@ export class TransportersService {
 
   async create(dto: CreateTransporterDto, userId: string) {
     return this.prisma.transporter.create({
-      data: { name: dto.name.trim(), address: dto.address.trim(), createdBy: userId },
+      data: {
+        name: dto.name.trim(),
+        address: dto.address.trim(),
+        templateType: dto.templateType ?? 'NTPC_CHALLAN',
+        createdBy: userId,
+      },
     });
   }
 

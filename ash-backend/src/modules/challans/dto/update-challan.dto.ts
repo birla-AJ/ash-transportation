@@ -28,4 +28,19 @@ export class UpdateChallanDto {
   @IsOptional()
   @IsUUID()
   transporterId?: string;
+
+  @ApiPropertyOptional({ example: 'Ramesh Kumar' })
+  @IsOptional()
+  @IsString()
+  driverName?: string;
+
+  @ApiPropertyOptional({ example: '9876543210' })
+  @IsOptional()
+  @IsString()
+  driverNumber?: string;
+
+  @ApiPropertyOptional({ example: 'Suresh' })
+  @IsOptional()
+  @IsString()
+  managerName?: string;
 }
