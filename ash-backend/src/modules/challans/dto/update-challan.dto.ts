@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsDateString, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class UpdateChallanDto {
@@ -6,12 +7,16 @@ export class UpdateChallanDto {
   @IsOptional()
   @IsString()
   @MinLength(3)
+  // Truck/vehicle numbers are always stored uppercase, regardless of how
+  // the client (website or mobile app) sends them.
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
   truckNumber?: string;
 
+  // No MinLength: Place Of Delivery / Party Name is optional for
+  // VEDANT_LOADING_TOKEN transporters and can be blank.
   @ApiPropertyOptional({ example: 'Rajkot Site' })
   @IsOptional()
   @IsString()
-  @MinLength(2)
   placeOfDelivery?: string;
 
   @ApiPropertyOptional({ example: '2026-07-25' })

@@ -1,6 +1,8 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+import { Transform } from 'class-transformer';
+
 import { IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class CreateChallanDto {
@@ -11,15 +13,22 @@ export class CreateChallanDto {
 
   @MinLength(3)
 
+  // Truck/vehicle numbers are always stored uppercase, regardless of how
+  // the client (website or mobile app) sends them.
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
+
   truckNumber: string;
 
-  @ApiProperty({ example: 'Rajkot Site' })
+  // Not mandatory anymore: for VEDANT_LOADING_TOKEN transporters, Driver
+  // Name is the mandatory field instead (see ChallansService.create, which
+  // enforces the right one based on the transporter's templateType).
+  @ApiPropertyOptional({ example: 'Rajkot Site' })
+
+  @IsOptional()
 
   @IsString()
 
-  @MinLength(2)
-
-  placeOfDelivery: string;
+  placeOfDelivery?: string;
 
   @ApiProperty({ example: 'a1b2c3d4-...', description: 'Selected transporter id' })
 
@@ -31,7 +40,9 @@ export class CreateChallanDto {
 
   // VEDANT_LOADING_TOKEN — the website only shows these fields on the Add
 
-  // Challan form in that case, so they stay optional here.
+  // Challan form in that case. Mandatory for that template (enforced in
+  // ChallansService.create), optional here at the DTO level since it
+  // doesn't apply to other templates.
 
   @ApiPropertyOptional({ example: 'Ramesh Kumar' })
 

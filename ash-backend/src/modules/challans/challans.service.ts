@@ -67,6 +67,22 @@ export class ChallansService {
   }
 
   async create(dto: CreateChallanDto, userId: string) {
+    const transporter = await this.prisma.transporter.findUnique({ where: { id: dto.transporterId } });
+    if (!transporter) throw new NotFoundException('Transporter not found');
+
+    // Only Truck Number is always mandatory. Which other field is required
+    // depends on the transporter's template: the standard NTPC challan
+    // needs Place Of Delivery, while Vedant's Loading Token needs Driver
+    // Name instead (Place Of Delivery / Party Name is optional there).
+    const isVedantToken = transporter.templateType === 'VEDANT_LOADING_TOKEN';
+    if (isVedantToken) {
+      if (!dto.driverName?.trim()) {
+        throw new BadRequestException('Driver Name is required');
+      }
+    } else if (!dto.placeOfDelivery?.trim()) {
+      throw new BadRequestException('Place Of Delivery is required');
+    }
+
     const sequence = await this.nextSequence();
     const now = new Date();
 
@@ -75,7 +91,7 @@ export class ChallansService {
         challanNumber: this.formatChallanNumber(sequence),
         challanSequence: sequence,
         truckNumber: dto.truckNumber.trim(),
-        placeOfDelivery: dto.placeOfDelivery.trim(),
+        placeOfDelivery: dto.placeOfDelivery?.trim() || '',
         challanDate: now,
         // Always format in IST regardless of the server's own system
         // timezone (e.g. UTC on most hosts) — toTimeString() would silently
