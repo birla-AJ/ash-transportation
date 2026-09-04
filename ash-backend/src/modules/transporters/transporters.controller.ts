@@ -4,6 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { TransportersService } from './transporters.service';
 import { CreateTransporterDto } from './dto/create-transporter.dto';
+import { UpdateTransporterDto } from './dto/update-transporter.dto';
 import { SetTransporterActiveDto } from './dto/set-transporter-active.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
@@ -37,6 +38,25 @@ export class TransportersController {
       action: 'TRANSPORTER_CREATED',
       entityType: 'Transporter',
       entityId: transporter.id,
+      performedBy: userId,
+      after: transporter,
+    });
+    return transporter;
+  }
+
+  @Patch(':id')
+  @Roles('sub_admin')
+  @ApiOperation({ summary: "Edit a transporter's name, address, or challan design" })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateTransporterDto,
+    @CurrentUser('userId') userId: string,
+  ) {
+    const transporter = await this.transportersService.update(id, dto);
+    await this.auditLogsService.log({
+      action: 'TRANSPORTER_UPDATED',
+      entityType: 'Transporter',
+      entityId: id,
       performedBy: userId,
       after: transporter,
     });

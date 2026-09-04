@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateTransporterDto } from './dto/create-transporter.dto';
+import { UpdateTransporterDto } from './dto/update-transporter.dto';
 
 @Injectable()
 export class TransportersService {
@@ -26,6 +27,19 @@ export class TransportersService {
         address: dto.address.trim(),
         templateType: dto.templateType ?? 'NTPC_CHALLAN',
         createdBy: userId,
+      },
+    });
+  }
+
+  async update(id: string, dto: UpdateTransporterDto) {
+    const existing = await this.prisma.transporter.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Transporter not found');
+    return this.prisma.transporter.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name.trim() }),
+        ...(dto.address !== undefined && { address: dto.address.trim() }),
+        ...(dto.templateType !== undefined && { templateType: dto.templateType }),
       },
     });
   }
