@@ -18,6 +18,7 @@ export type AuditAction =
   | 'ADMIN_DELETED'
   | 'ADMIN_STATUS_CHANGED'
   | 'TRANSPORTER_CREATED'
+  | 'TRANSPORTER_UPDATED'
   | 'TRANSPORTER_STATUS_CHANGED';
 
 export interface CreateAuditLogInput {
